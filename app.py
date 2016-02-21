@@ -54,7 +54,7 @@ def create_user():
 		models.db.session.commit()
 		return jsonify({'user': user.serialize()}), 201
 
-@application.route('/BookStore/v1.0/Book', methods=['POST'])
+@application.route('/BookStore/v1.0/Book/', methods=['POST'])
 def create_book():
 	if not request.json:
 		abort(400)
@@ -83,7 +83,7 @@ def create_book():
 
 		models.db.session.add(book)
 		models.db.session.commit()
-		return jsonify({'books': book.serialize()}), 201
+		return jsonify({'book': book.serialize()}), 201
 
 @application.route('/BookStore/v1.0/Book/', methods=['GET'])
 def get_books():
