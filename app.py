@@ -65,9 +65,12 @@ def create_book():
 	elif not 'description' in request.json:
 		abort(400)
 	else:
-		book = models.Book(int(request.json['user_id']), request.json['name'], request.json['description'])
+		book = models.Book(int(request.json['user_id']), request.json['name'], request.json['description'], request.json['price'])
+		book.sold = False
+
 		if 'author' in request.json:
 			book.author = request.json['author']
+
 		if 'edition' in request.json:
 			book.edition = request.json['edition']
 
@@ -75,7 +78,14 @@ def create_book():
 			book.bidding_allowed = request.json['bidding_allowed']
 		else:
 			book.bidding_allowed = False
-		book.sold = False
+
+		if 'rent' in request.json:
+			book.rent = request.json['rent']
+			book.minimum_period = int(request.json['minimum_period'])
+			book.maximum_period = int(request.json['maximum_period'])
+
+		if 'sell' in request.json:
+			book.sell = request.json['sell']
 
 		if 'latitude' in request.json and 'longitude' in request.json:
 			book.latitude = float(request.json['latitude'])

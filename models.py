@@ -4,13 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/BookStoreDatabase.db'
 db = SQLAlchemy(application)
 
-class Location:
-	latitude = 0.0
-	longitude = 0.0
-	def __init__(self, latitude, longitude):
-		self.latitude = latitude
-		self.longitude = longitude
-
 class User(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	user_name = db.Column(db.String(120), index=True, unique=True)
@@ -47,14 +40,20 @@ class Book(db.Model):
 	description = db.Column(db.String(1000))
 	latitude = db.Column(db.Float(10))
 	longitude = db.Column(db.Float(10))
+	price = db.Column(db.Float(10))
+	rent = db.Column(db.Boolean, index=True)
+	sell = db.Column(db.Boolean, index=True)
+	minimum_period = db.Column(db.Integer)
+	maximum_period = db.Column(db.Integer)
 
 	def __repr__(self):
 		return '<Book %r>' % (self.name)
 
-	def __init__(self, user_id, name, description):
+	def __init__(self, user_id, name, description, price):
 		self.user_id = user_id
 		self.name = name
 		self.description = description
+		self.price = price
 	
 	def serialize(self):
 		dict = {}
@@ -65,9 +64,12 @@ class Book(db.Model):
 		dict['sold'] = self.sold
 		dict['bidding_allowed'] = self.bidding_allowed
 		dict['description'] = self.description
-		if not self.latitude is None or not self.longitude is None:
-			locDict = {}
-			locDict['longitude'] = self.longitude
-			locDict['latitude'] = self.latitude
-			dict['location'] = locDict
+		dict['rent'] = self.rent
+		dict['sell'] = self.sell
+		if not self.latitude is None and not self.longitude is None:
+			dict['longitude'] = self.longitude
+			dict['latitude'] = self.latitude
+		if not self.rent is None and self.rent is True:
+			dict['minimum_period'] = self.minimum_period
+			dict['maximum_period'] = self.maximum_period
 		return dict
