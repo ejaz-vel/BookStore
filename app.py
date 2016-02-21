@@ -11,9 +11,30 @@ def get_user(user_id):
 	if user is None:
 		abort(404)
 	else:
-		return jsonify({'users': user.serialize()}), 200
+		return jsonify({'user': user.serialize()}), 200
 
-@application.route('/BookStore/v1.0/User', methods=['POST'])
+@application.route('/BookStore/v1.0/User/', methods=['GET'])
+def login():
+	if not 'password_hash' in request.args:
+		abort(400)
+
+	passwordHash = request.args['password_hash']
+	user = None
+	if 'email_address' in request.args:
+		emailAddress = request.args['email_address']
+		user = models.User.query.filter_by(email_address=emailAddress).first()
+	elif 'phone' in request.args:
+		phone = request.args['phone']
+		user = models.User.query.filter_by(phone=phone).first()
+	else:
+		abort(400)
+
+	if not user is None and user.password_hash == passwordHash:
+		return jsonify({'user': user.serialize()}), 200
+	else:
+		abort(401)
+
+@application.route('/BookStore/v1.0/User/', methods=['POST'])
 def create_user():
 	if not request.json:
 		abort(400)
@@ -25,11 +46,13 @@ def create_user():
 		abort(400)
 	else:
 		user = models.User(request.json['user_name'], request.json['email_address'], request.json['password_hash'])
-		user.address = request.json['address']
-		user.phone = int(request.json['phone'])
+		if 'address' in request.json:
+			user.address = request.json['address']
+		if 'phone' in request.json:
+			user.phone = int(request.json['phone'])
 		models.db.session.add(user)
 		models.db.session.commit()
-		return jsonify({'users': user.serialize()}), 201
+		return jsonify({'user': user.serialize()}), 201
 
 @application.route('/BookStore/v1.0/Book', methods=['POST'])
 def create_book():
@@ -80,7 +103,7 @@ def get_books():
 		result = []
 		for book in books:
 			result.append(book.serialize())
-		return jsonify({'books': result}), 200
+		return jsonify(Set = result), 200
 
 @application.errorhandler(404)
 def not_found(error):

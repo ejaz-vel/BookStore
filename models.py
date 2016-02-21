@@ -29,6 +29,7 @@ class User(db.Model):
 	
 	def serialize(self):
 		dict = {}
+		dict['id'] = self.id
 		dict['user_name'] = self.user_name
 		dict['email_address'] = self.email_address
 		dict['address'] = self.address
