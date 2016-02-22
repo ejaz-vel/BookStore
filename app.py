@@ -13,6 +13,24 @@ def get_user(user_id):
 	else:
 		return jsonify({'user': user.serialize()}), 200
 
+
+@application.route('/BookStore/v1.0/User/Recommend/<int:user_id>', methods=['GET'])
+def get_recommended_books(user_id):
+	user = models.User.query.filter_by(id=user_id).first()
+	if user is None:
+		abort(404)
+	else:
+		books = models.Book.query.all()
+		recommendedBooks = []
+		count = 0
+		for book in books:
+			if count > 5:
+				break;
+			recommendedBooks.append(book.serialize())
+			count += 1
+
+		return jsonify({'List': recommendedBooks}), 200
+
 @application.route('/BookStore/v1.0/User/', methods=['GET'])
 def login():
 	if not 'password_hash' in request.args:
@@ -69,10 +87,10 @@ def create_book():
 		book.sold = False
 
 		if 'author' in request.json:
-			book.author = request.json['author']
+			book.author = request.json['author'].lower()
 
 		if 'edition' in request.json:
-			book.edition = request.json['edition']
+			book.edition = request.json['edition'].lower()
 
 		if 'bidding_allowed' in request.json:
 			book.bidding_allowed = request.json['bidding_allowed']
@@ -99,10 +117,10 @@ def create_book():
 def get_books():
 	books = []
 	if 'name' in request.args:
-		book_name = request.args['name']
+		book_name = request.args['name'].lower()
 		books = models.Book.query.filter_by(name=book_name).all()
 	elif 'author' in request.args:
-		book_author = request.args['author']
+		book_author = request.args['author'].lower()
 		books = models.Book.query.filter_by(author=book_author).all()
 	else:
 		abort(404)
@@ -113,7 +131,7 @@ def get_books():
 		result = []
 		for book in books:
 			result.append(book.serialize())
-		return jsonify(Set = result), 200
+		return jsonify(List = result), 200
 
 @application.errorhandler(404)
 def not_found(error):

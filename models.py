@@ -51,7 +51,7 @@ class Book(db.Model):
 
 	def __init__(self, user_id, name, description, price):
 		self.user_id = user_id
-		self.name = name
+		self.name = name.lower()
 		self.description = description
 		self.price = price
 	
