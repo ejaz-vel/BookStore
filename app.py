@@ -9,53 +9,15 @@ import models
 application = Flask(__name__)
 
 
+# creating the get api for the user.
 # this is to retrieve the details of the user when the user id is inputted.
 @application.route('/BookStore/v1.0/User/<int:user_id>', methods=['GET'])
-# creating the get api for the user. This is what we are going to put in the url: /BookStore/v1.0/User/<int:user_id>
 def get_user(user_id):
-	# defining the function: get_user. parameter passed is user_id.
 	user = models.User.query.filter_by(id=user_id).first()
-
-	# None means null
 	if user is None:
 		abort(404)
 	else:
 		return jsonify({'user': user.serialize()}), 200
-	# return jsonify will return the user heading with the details of the user.
-	# user.serialise will contain the value of the user field. this is stored in the map.
-
-
-# api to retrieve the details from the orders table:
-@application.route('/BookStore/v1.0/Orders/<int:order_id>', methods=['GET'])
-def get_orders(order_id):
-	orders = models.Orders.query.filter_by(orderId=order_id).first()
-	# .first is done because if its not done then it will return an array list with one element. but since we just want
-	# that particular element with that order id there fore doing first.
-
-	if orders is None:
-		abort(400)
-	else:
-		return jsonify({'order': orders.serialize()}), 200
-
-
-# api which will give the list of recommended books.
-@application.route('/BookStore/v1.0/User/Recommend/<int:user_id>', methods=['GET'])
-def get_recommended_books(user_id):
-	user = models.User.query.filter_by(id=user_id).first()
-	if user is None:
-		abort(404)
-	else:
-		books = models.Book.query.all()
-		recommendedBooks = []
-		count = 0
-		for book in books:
-			if count > 5:
-				break;
-			recommendedBooks.append(book.serialize())
-			count += 1
-
-		return jsonify({'List': recommendedBooks}), 200
-
 
 # api to login.
 @application.route('/BookStore/v1.0/User/', methods=['GET'])
@@ -81,15 +43,57 @@ def login():
 	else:
 		abort(401)
 
+# api which will give the list of recommended books.
+@application.route('/BookStore/v1.0/User/Recommend/<int:user_id>', methods=['GET'])
+def get_recommended_books(user_id):
+	user = models.User.query.filter_by(id=user_id).first()
+	if user is None:
+		abort(404)
+	else:
+		books = models.Book.query.all()
+		recommendedBooks = []
+		count = 0
+		for book in books:
+			if count > 5:
+				break;
+			recommendedBooks.append(book.serialize())
+			count += 1
+		return jsonify({'List': recommendedBooks}), 200
+
+# api to retrieve the details from the orders table:
+@application.route('/BookStore/v1.0/Orders/<int:order_id>', methods=['GET'])
+def get_orders(order_id):
+	orders = models.Orders.query.filter_by(orderId=order_id).first()
+	if orders is None:
+		abort(400)
+	else:
+		return jsonify({'order': orders.serialize()}), 200
+
+# api to create a orders entry
+@application.route('/BookStore/v1.0/Orders/', methods=['POST'])
+def create_orders():
+	# the below 2 if conditions means that if these necessary parameters are not present then abort
+	if not request.json:
+		abort(400)
+	elif not 'book_id' in request.json:
+		abort(400)
+	elif not 'user_id' in request.json:
+		abort(400)
+	elif not 'price' in request.json:
+		abort(400)
+	else:
+		# the order in which the elements are added like order id, date order , book id all these must be the same as how the schema is established.
+		orders = models.Orders(int(request.json['book_id']), int(request.json['user_id']), float(request.json['price']))
+
+		# updating the sold field of the books table.
+		book = models.Book.query.filter_by(id=int(request.json['book_id'])).update(dict(sold=True))
+		models.db.session.add(orders)
+		models.db.session.commit()
+		return jsonify({'order': orders.serialize()}), 201
 
 # api to create a user entry.
 @application.route('/BookStore/v1.0/User/', methods=['POST'])
-# with post api, we always use the Create function.
 def create_user():
-	# in create, the framework is:  if not request.json or not 'title' in request.json. here title is username, email address, password hash etc.
-	# the if statements mean that if the item which is added is not in json format or it does not contain any of these fields
-	# like user name or email address or passwrod hash ( for this particular example) , then abort it.
-
 	if not request.json:
 		abort(400)
 	elif not 'user_name' in request.json:
@@ -117,29 +121,6 @@ def create_user():
 		models.db.session.commit()
 		return jsonify({'user': user.serialize()}), 201
 	# 201 is the http code for created. always use 201 while doing post method.
-
-
-# api to create a orders entry
-@application.route('/BookStore/v1.0/Orders/', methods=['POST'])
-def create_orders():
-	# the below 2 if conditions means that if these necessary parameters are not present then abort
-	if not request.json:
-		abort(400)
-	elif not 'book_id' in request.json:
-		abort(400)
-	elif not 'user_id' in request.json:
-		abort(400)
-	elif not 'price' in request.json:
-		abort(400)
-	else:
-		# the order in which the elements are added like order id, date order , book id all these must be the same as how the schema is established.
-		orders = models.Orders(int(request.json['book_id']), int(request.json['user_id']), float(request.json['price']))
-
-		# updating the sold field of the books table.
-		book = models.Book.query.filter_by(id=int(request.json['book_id'])).update(dict(sold=True))
-		models.db.session.add(orders)
-		models.db.session.commit()
-		return jsonify({'order': orders.serialize()}), 201
 
 # api to create a book entry
 @application.route('/BookStore/v1.0/Book/', methods=['POST'])
@@ -173,7 +154,6 @@ def create_book():
 
 		if 'rent' in request.json:
 			book.rent = bool(request.json['rent'])
-			print book.rent
 			book.minimum_period = int(request.json['minimum_period'])
 			book.maximum_period = int(request.json['maximum_period'])
 
@@ -188,11 +168,9 @@ def create_book():
 		models.db.session.commit()
 		return jsonify({'book': book.serialize()}), 201
 
-
-# searching a book by a string name which could be author name. or book name.
-# we want to design search in such a way that we d0nt want the user to specify whether the string he is typing is the
+# searching a book by a string name which could be author name or book name.
+# we want to design search in such a way that we dont want the user to specify whether the string he is typing is the
 # name of the book or the name of the author.
-# request.args is inbuilt in REST apis where request is an object and args is a field.
 
 # functionalities implemented for search are:
 # 1. sort the searched books based on something ( in the below case, we are appending names of book first and then the author names, so while displaying also the book names appear first. the top 10 only are shown
@@ -202,7 +180,6 @@ def create_book():
 @application.route('/BookStore/v1.0/Book/', methods=['GET'])
 def get_books():
 	searchString = request.args['queryString'].lower()
-	print searchString
 	books = []
 	# books is a list.
 
@@ -210,9 +187,8 @@ def get_books():
 	bookAuthor = models.Book.query.filter_by(author=searchString, sold=False).all()
 	# filter by query here means that a select statement. sold = false means that only if the book is not sold, then retrieve those books.
 
-
-	books.extend(bookNames)
 	# appending booknames before book author names means that all the booknames will appear first because its a list.
+	books.extend(bookNames)
 	books.extend(bookAuthor)
 
 	if len(books) == 0:
@@ -223,7 +199,6 @@ def get_books():
 
 		# looping over all the books which are there in the books list means having the author name or book name that matches the queryString
 		for book in books:
-			print result
 			result.append(book.serialize())
 
 		# finding the number of books in the books list
@@ -232,20 +207,10 @@ def get_books():
 		# if the number is more thn 10 then we need to show just the top 10 books retrieved.
 		return jsonify(List=result[0:numBooks]), 200
 
-
-
-	# The odd thing about the error is that it came back with an HTML message instead of JSON,
-	# because that is how Flask generates the 404 response by default. Since this is a web service client applications will expect
-
-
 #  that we always respond with JSON, so we need to improve our 404 error handler:
 @application.errorhandler(404)
 def not_found(error):
 	return make_response(jsonify({'error': 'Not found'}), 404)
 
-
-# the above thing gives: And we get a much more API friendly error response:
-
-# the main statement in python starts like this.
 if __name__ == '__main__':
 	application.run(host='0.0.0.0', port=8080, debug=True)
