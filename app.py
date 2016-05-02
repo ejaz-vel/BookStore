@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, abort
 from flask import make_response
 import math
+from collections import Counter
 # flask is a package, and Flask, jsonify, request etc are all the classes inside this package.
 
 import models
@@ -53,9 +54,25 @@ def get_recommended_books(user_id):
 		books = models.Book.query.all()
 		recommendedBooks = []
 		count = 0
-		for book in books:
-			if count > 5:
-				break;
+                if 'latitude' in request.args and 'longitude' in request.args:
+                    locDic = {}
+                    for book in books:
+                        if book.latitude is None and book.longitude is None:
+                            continue
+                        curLat = float(request.args['latitude'])
+                        curLong = float(request.args['longitude'])
+                        bookLat = book.latitude
+                        bookLong = book.longitude
+                        locDic[book] = abs(curLat - bookLat) * abs(curLong - bookLong)
+                    for book, dist in reversed(Counter(locDic).most_common(len(locDic))):
+                        if count > 5:
+                            break;
+                        recommendedBooks.append(book.serialize())
+                        count += 1
+                else:
+                    for book in books:
+                        if count > 5:
+                            break;
 			recommendedBooks.append(book.serialize())
 			count += 1
 		return jsonify({'List': recommendedBooks}), 200
@@ -213,4 +230,4 @@ def not_found(error):
 	return make_response(jsonify({'error': 'Not found'}), 404)
 
 if __name__ == '__main__':
-	application.run(host='0.0.0.0', port=8080, debug=True)
+	application.run(host='0.0.0.0', port=80, debug=True)
