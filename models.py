@@ -106,6 +106,7 @@ class Book(db.Model):
 		dict['description'] = self.description
 		dict['rent'] = self.rent
 		dict['sell'] = self.sell
+                dict['price'] = self.price
 
 		if not self.latitude is None and not self.longitude is None:
 			dict['longitude'] = self.longitude
