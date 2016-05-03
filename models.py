@@ -85,6 +85,7 @@ class Book(db.Model):
 	sell = db.Column(db.Boolean, index=True)
 	minimum_period = db.Column(db.Integer)
 	maximum_period = db.Column(db.Integer)
+        condition = db.Column(db.Float(10))
 
 	def __repr__(self):
 		return '<Book %r>' % (self.name)
@@ -107,6 +108,7 @@ class Book(db.Model):
 		dict['rent'] = self.rent
 		dict['sell'] = self.sell
                 dict['price'] = self.price
+                dict['condition'] = self.condition
 
 		if not self.latitude is None and not self.longitude is None:
 			dict['longitude'] = self.longitude

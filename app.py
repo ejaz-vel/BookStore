@@ -177,6 +177,9 @@ def create_book():
 		if 'sell' in request.json:
 			book.sell = bool(request.json['sell'])
 
+                if 'condition' in request.json:
+                        book.condition = float(request.json['condition'])
+
 		if 'latitude' in request.json and 'longitude' in request.json:
 			book.latitude = float(request.json['latitude'])
 			book.longitude = float(request.json['longitude'])
